@@ -1,5 +1,6 @@
 import random
 import streamlit as st
+from logic_utils import check_guess
 
 def get_range_for_difficulty(difficulty: str):
     if difficulty == "Easy":
@@ -28,23 +29,6 @@ def parse_guess(raw: str):
 
     return True, value, None
 
-
-def check_guess(guess, secret):
-    if guess == secret:
-        return "Win", "🎉 Correct!"
-
-    try:
-        if guess > secret:
-            return "Too High", "📈 Go HIGHER!"
-        else:
-            return "Too Low", "📉 Go LOWER!"
-    except TypeError:
-        g = str(guess)
-        if g == secret:
-            return "Win", "🎉 Correct!"
-        if g > secret:
-            return "Too High", "📈 Go HIGHER!"
-        return "Too Low", "📉 Go LOWER!"
 
 
 def update_score(current_score: int, outcome: str, attempt_number: int):
@@ -93,7 +77,7 @@ if "secret" not in st.session_state:
     st.session_state.secret = random.randint(low, high)
 
 if "attempts" not in st.session_state:
-    st.session_state.attempts = 1
+    st.session_state.attempts = 0  #FIX: Changed initial attempts to accurately display attempts made, AI said this correctly changes the issue I noticed where the attempts were not being tracked correctly
 
 if "score" not in st.session_state:
     st.session_state.score = 0
@@ -107,7 +91,7 @@ if "history" not in st.session_state:
 st.subheader("Make a guess")
 
 st.info(
-    f"Guess a number between 1 and 100. "
+    f"Guess a number between {low} and {high}. "  #FIX: Changed hardcoded values, AI said I was missing this which keeps the range dynamic based on difficulty
     f"Attempts left: {attempt_limit - st.session_state.attempts}"
 )
 
@@ -131,9 +115,12 @@ with col2:
 with col3:
     show_hint = st.checkbox("Show hint", value=True)
 
-if new_game:
+if new_game: # FIX: New game button was not resetting the game state AI told me to update status
     st.session_state.attempts = 0
-    st.session_state.secret = random.randint(1, 100)
+    st.session_state.secret = random.randint(low, high)  #FIX: Instead of hardcoded range, AI helped me figure out to use values "low" and "high" from get_range_for_difficulty
+    st.session_state.status = "playing"
+    st.session_state.history = []  #FIX: removes the old attempt history to start new, AI told me history keeps the guesses stored
+    st.session_state.score = 0  #FIX: I noticed score wasn't resetting, I asked AI and it said session_state.score needed to be reset to 0 to reflect a new game
     st.success("New game started.")
     st.rerun()
 
